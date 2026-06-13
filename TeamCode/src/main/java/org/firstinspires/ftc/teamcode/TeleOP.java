@@ -41,9 +41,10 @@ public class TeleOP extends LinearOpMode {
     DcMotor driveRight = null;
     DcMotor driveLeft = null;
     DcMotor intake = null;
+    DcMotor pivot = null;
     private double driveVelocityCap = 1;
-
-
+    private String state = "none";
+    private boolean intaking=false;
 
     private int tpos = 0;
 
@@ -68,11 +69,17 @@ public class TeleOP extends LinearOpMode {
         intake.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         intake.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         intake.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
-        intake.setDirection(DcMotorSimple.Direction.REVERSE);
+
+        pivot.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        pivot.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        pivot.setTargetPosition(0);
+        pivot.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        pivot.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        pivot.setPower(0.8);
 
         // Invertimos un lado para que todos avancen hacia adelante
-        driveLeft.setDirection(DcMotorSimple.Direction.REVERSE);
-        driveRight.setDirection(DcMotorSimple.Direction.FORWARD);
+        driveLeft.setDirection(DcMotorSimple.Direction.FORWARD);
+        driveRight.setDirection(DcMotorSimple.Direction.REVERSE);
 
 
         // Espera a que empiece el match
@@ -101,12 +108,26 @@ public class TeleOP extends LinearOpMode {
             //triggers
             if (gamepad2.right_trigger > 0.5) {
                 intake.setPower(-0.9);
+                intaking = true;
 
             } else if (gamepad2.left_trigger > 0.5) {
                 intake.setPower(0.5);
 
             } else {
                 intake.setPower(0);
+            }
+
+            if (intaking & gamepad2.b){
+                pivot.setTargetPosition(1800);
+                state = "outtaking";
+            }
+            else if (gamepad2.b & !intaking){
+                pivot.setTargetPosition(0);
+                state="intaking";
+            }
+            else if (intaking) {
+                pivot.setTargetPosition(0);
+                state="intaking";
             }
 
 // SOY GAY = True
@@ -116,6 +137,9 @@ public class TeleOP extends LinearOpMode {
             telemetry.addData("Right PWR", rightPwr);
             telemetry.addData("Left PWR", leftPwr);
             telemetry.addData("Intake", intake.getPower());
+            telemetry.addData("pivot pos", pivot.getCurrentPosition());
+            telemetry.addData("pivot target pos", pivot.getTargetPosition());
+            telemetry.addData("pivot state", state);
 
             telemetry.update();
 
